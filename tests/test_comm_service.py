@@ -1,5 +1,6 @@
 """Tests for src.comm_service."""
 from unittest.mock import AsyncMock, MagicMock, patch
+import os
 
 import pytest
 
@@ -25,7 +26,7 @@ def test_listen_to_discord_raises_when_cursor_api_key_missing():
 
 @pytest.mark.asyncio
 async def test_agent_run_calls_generate_response_and_add_memory():
-    with patch("src.comm_service.generate_response") as mock_gen:
+    with patch("src.comm_service.ai.generate_response") as mock_gen:
         with patch("src.comm_service.add_memory") as mock_add:
             mock_gen.return_value = "Agent reply"
             result = await agent_run("user prompt")
@@ -55,6 +56,7 @@ async def test_on_message_calls_agent_run_and_sends_reply():
     mock_message.author.__eq__ = lambda self, other: False  # not client.user
     mock_message.content = "hello"
     mock_message.channel.send = AsyncMock()
+    mock_message.add_reaction = AsyncMock()
     with patch("src.comm_service.agent_run", new_callable=AsyncMock) as mock_agent:
         mock_agent.return_value = "agent said hi"
         await on_message(mock_message)
@@ -69,9 +71,45 @@ async def test_on_message_sends_error_and_does_not_add_memory_on_agent_error():
     mock_message.author = MagicMock()
     mock_message.content = "hello"
     mock_message.channel.send = AsyncMock()
-    with patch("src.comm_service.generate_response") as mock_gen:
+    mock_message.add_reaction = AsyncMock()
+    with patch("src.comm_service.ai.generate_response") as mock_gen:
         with patch("src.comm_service.add_memory") as mock_add:
             mock_gen.side_effect = AgentError("Sorry, something went wrong.")
             await on_message(mock_message)
             mock_message.channel.send.assert_called_once_with("Sorry, something went wrong.")
             mock_add.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_on_message_cwd_updates_repo_path_and_persists():
+    mock_message = MagicMock()
+    mock_message.author = MagicMock()
+    mock_message.content = "/cwd /tmp/newpath"
+    mock_message.channel.send = AsyncMock()
+    mock_message.add_reaction = AsyncMock()
+    with patch("os.path.isabs", return_value=True):
+        with patch("os.path.isdir", return_value=True):
+            with patch("src.comm_service.ai") as mock_ai:
+                with patch("src.comm_service.set_key") as mock_set_key:
+                    mock_ai.REPO_PATH = "/tmp/old"
+                    await on_message(mock_message)
+                    assert mock_ai.REPO_PATH == "/tmp/newpath"
+                    env_path = os.path.join("/tmp/newpath", ".env")
+                    mock_set_key.assert_called_once_with(env_path, "REPO_PATH", "/tmp/newpath")
+                    mock_message.channel.send.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_on_message_cwd_invalid_path_sends_error():
+    mock_message = MagicMock()
+    mock_message.author = MagicMock()
+    mock_message.content = "/cwd /tmp/missing"
+    mock_message.channel.send = AsyncMock()
+    mock_message.add_reaction = AsyncMock()
+    with patch("os.path.isabs", return_value=True):
+        with patch("os.path.isdir", return_value=False):
+            with patch("src.comm_service.ai") as mock_ai:
+                mock_ai.REPO_PATH = "/tmp/old"
+                await on_message(mock_message)
+                mock_message.channel.send.assert_called_once()
+                assert mock_ai.REPO_PATH == "/tmp/old"

@@ -1,12 +1,15 @@
-import discord
+import asyncio
 import os
-from dotenv import load_dotenv
-from src.memory import add_memory
-from src.logs import get_logger
-from src.ai import generate_response
-from src.schema import AgentError, EmptyPromptError, EnvironmentVariablesNotFoundError    
+
+import discord
+from dotenv import load_dotenv, set_key
 
 load_dotenv()
+
+import src.ai as ai
+from src.logs import get_logger
+from src.memory import add_memory
+from src.schema import AgentError, EmptyPromptError, EnvironmentVariablesNotFoundError    
 logger = get_logger(__name__)
 
 token = os.getenv("DISCORD_TOKEN")
@@ -21,7 +24,8 @@ def _get_discord_client():
 
 async def agent_run(prompt: str) -> str:
     """Run the agent on the prompt. On success returns the response and adds to memory. On error raises EmptyPromptError or AgentError; caller should send the error message (do not add to memory)."""
-    res_message = generate_response(prompt)
+    # Run blocking generate_response in a thread so the event loop can process Discord heartbeats
+    res_message = await asyncio.to_thread(ai.generate_response, prompt)
     add_memory(f"User: {prompt}\n\n Agent: {res_message}\n\n")
     return res_message
 
@@ -41,6 +45,30 @@ async def on_message(message):
     await message.add_reaction("🤖")
 
     prompt = message.content
+    # Handle /cwd <absolute_path> to update working directory for the agent and persist to .env
+    if prompt.startswith("/cwd"):
+        parts = prompt.split(maxsplit=1)
+        if len(parts) < 2 or not parts[1].strip():
+            await message.channel.send("Usage: /cwd /absolute/path")
+            return
+        new_path = parts[1].strip()
+        if not os.path.isabs(new_path):
+            await message.channel.send("Path must be absolute.")
+            return
+        if not os.path.isdir(new_path):
+            await message.channel.send("Path does not exist or is not a directory.")
+            return
+        ai.REPO_PATH = new_path
+        env_path = os.path.join(ai.REPO_PATH, ".env")
+        try:
+            set_key(env_path, "REPO_PATH", new_path)
+        except Exception as exc:
+            logger.warning("Failed to persist REPO_PATH to %s: %s", env_path, exc)
+            await message.channel.send(f"Working directory set to: {new_path} (warning: could not persist to .env)")
+        else:
+            await message.channel.send(f"Working directory set to: {new_path}")
+        return
+
     async with message.channel.typing():
         try:
             res_message = await agent_run(prompt)

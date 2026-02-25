@@ -62,4 +62,5 @@ def test_generate_response_sanitizes_prompt_before_calling_agent(mock_run):
     mock_run.return_value = MagicMock(returncode=0, stdout="ok", stderr="")
     ai.generate_response("  user input  ")
     call_args = mock_run.call_args[0][0]
-    assert call_args[-1] == "user input"
+    assert "user input" in call_args
+    assert call_args[-1].startswith("--output-format")
