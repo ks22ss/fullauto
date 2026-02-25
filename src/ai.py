@@ -46,9 +46,9 @@ def generate_response(prompt: str) -> str:
         timeout=1800,
         cwd=REPO_PATH,
     )
-    logger.info("Return code:", result.returncode)
-    logger.info("STDOUT:", result.stdout)
-    logger.info("STDERR:", result.stderr)
+    logger.info("Return code: %s", result.returncode)
+    logger.info("STDOUT: %s", result.stdout)
+    logger.info("STDERR: %s", result.stderr)
     output = result.stdout
     if result.returncode == 0:
         logger.info(f"Successfully generated response: bytes: {len(output)}")
