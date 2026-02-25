@@ -122,4 +122,4 @@ full_auto_agent/
 
 ## License
 
-MIT (or your choice).
+This project is licensed under the **MIT License**. You may use, copy, modify, and distribute it under the terms of that license. See [LICENSE](LICENSE) for the full text.
