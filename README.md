@@ -63,6 +63,7 @@ A fully autonomous agent application that uses **Cursor CLI** to write code, des
   Or with Typer CLI: `uv run python -m src.main discord-client`
 
 - **Job runner** (scheduled agent run):
+
   ```bash
   python -m src.main job-runner
   ```
