@@ -38,6 +38,7 @@ async def on_message(message):
     if message.author == client.user:
         return
     logger.info(f"Message received, total bytes: {len(message.content)}")
+    await message.add_reaction("🤖")
 
     prompt = message.content
 
