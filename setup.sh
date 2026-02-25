@@ -3,6 +3,11 @@
 # Requires: bash, curl. For headless/VM use, set CURSOR_API_KEY in .env (app loads it) or export it.
 set -e
 
+
+# Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv sync
+
 echo "Installing Cursor CLI..."
 curl -fsSL https://cursor.com/install | bash
 
