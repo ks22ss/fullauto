@@ -3,9 +3,12 @@ import re
 import subprocess
 
 from src.logs import get_logger
-from src.schema import AgentError, EmptyPromptError
+from src.schema import AgentError, EmptyPromptError, EnvironmentVariablesNotFoundError
 
 logger = get_logger(__name__)
+
+REPO_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 
 def _sanitize_prompt(prompt: str) -> str:
     """
@@ -36,7 +39,13 @@ def generate_response(prompt: str) -> str:
         "--output-format", "json",
         sanitized,
     ]
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=1800,
+        cwd=REPO_PATH,
+    )
     output = result.stdout
     if result.returncode == 0:
         logger.info(f"Successfully generated response: bytes: {len(output)}")

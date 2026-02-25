@@ -35,9 +35,9 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    logger.info(f"Message received, total bytes: {len(message.content)}")
     if message.author == client.user:
         return
+    logger.info(f"Message received, total bytes: {len(message.content)}")
 
     prompt = message.content
 
