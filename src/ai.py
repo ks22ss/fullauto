@@ -1,6 +1,9 @@
-import subprocess
-from src.logs import get_logger
+import os
 import re
+import subprocess
+
+from src.logs import get_logger
+from src.schema import AgentError, EmptyPromptError
 
 logger = get_logger(__name__)
 
@@ -23,11 +26,13 @@ def _sanitize_prompt(prompt: str) -> str:
 def generate_response(prompt: str) -> str:
     sanitized = _sanitize_prompt(prompt)
     if not sanitized:
-        return "Please send a non-empty message."
-    # List form, no shell=True: prompt is passed as a single argument to the executable (no shell injection).
+        raise EmptyPromptError("Please send a non-empty message.")
+
+    model = os.getenv("CURSOR_MODEL", "Composer 1.5")
     cmd = [
         "agent",
         "-p", "--force", "--mode=agent",
+        "--model", model,
         "--output-format", "json",
         sanitized,
     ]
@@ -36,6 +41,5 @@ def generate_response(prompt: str) -> str:
     if result.returncode == 0:
         logger.info(f"Successfully generated response: bytes: {len(output)}")
         return output
-    else:
-        logger.error(f"Error generating response: {result.stderr}")
-        return f"Sorry, I encountered an error. Please try again later."
+    logger.error(f"Error generating response: {result.stderr}")
+    raise AgentError("Sorry, I encountered an error. Please try again later.", stderr=result.stderr or "")

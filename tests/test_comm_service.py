@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from src.comm_service import agent_run, client, listen_to_discord, on_message
-from src.schema import EnvironmentVariablesNotFoundError
+from src.schema import AgentError, EmptyPromptError, EnvironmentVariablesNotFoundError
 
 
 def test_listen_to_discord_raises_when_discord_token_missing():
@@ -60,3 +60,18 @@ async def test_on_message_calls_agent_run_and_sends_reply():
         await on_message(mock_message)
         mock_agent.assert_called_once_with("hello")
         mock_message.channel.send.assert_called_once_with("agent said hi")
+
+
+@pytest.mark.asyncio
+async def test_on_message_sends_error_and_does_not_add_memory_on_agent_error():
+    """When generate_response raises, on_message sends the error and add_memory is never called."""
+    mock_message = MagicMock()
+    mock_message.author = MagicMock()
+    mock_message.content = "hello"
+    mock_message.channel.send = AsyncMock()
+    with patch("src.comm_service.generate_response") as mock_gen:
+        with patch("src.comm_service.add_memory") as mock_add:
+            mock_gen.side_effect = AgentError("Sorry, something went wrong.")
+            await on_message(mock_message)
+            mock_message.channel.send.assert_called_once_with("Sorry, something went wrong.")
+            mock_add.assert_not_called()

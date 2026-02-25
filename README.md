@@ -38,11 +38,17 @@ A fully autonomous agent application that uses **Cursor CLI** to write code, des
 
 3. **Configure environment**
    - Copy `.env.example` to `.env`.
-   - Set `DISCORD_TOKEN` and `CURSOR_API_KEY` (and any other variables).
+   - Set `DISCORD_TOKEN` and `CURSOR_API_KEY`.
+   - Optional: `CURSOR_MODEL` (default: `Composer 1.5`) — set to use a different Cursor CLI model.
    - Configure Cursor and repo settings as needed for the agent workspace.
 
-4. **Cursor CLI**
-   - Install Cursor CLI and ensure the `agent` command is available where you run the Discord client and job runner (Linux/macOS bash environment supported).
+4. **Cursor CLI** (Linux/macOS)
+   - **Option A:** Run the setup script to install Cursor CLI, add `~/.local/bin` to PATH, and set default model to Composer 1.5:
+     ```bash
+     chmod +x setup.sh && ./setup.sh
+     source ~/.bashrc   # or open a new terminal
+     ```
+   - **Option B:** Install Cursor CLI yourself and ensure the `agent` command is on your PATH. The app uses `CURSOR_MODEL` from `.env` or the environment (default `Composer 1.5`).
 
 5. **Rules and memory**
    - Populate `.cursor/rules` to shape agent behavior.
@@ -91,7 +97,9 @@ See `pyproject.toml` for versions. Optional dev deps: `pytest`, `pytest-asyncio`
 ```
 full_auto_agent/
 ├── README.md
+├── LICENSE
 ├── pyproject.toml
+├── setup.sh             # Cursor CLI install + PATH + CURSOR_MODEL (Linux/macOS)
 ├── .env.example
 ├── .cursor/
 │   └── rules/           # Agent behavior rules

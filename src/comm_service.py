@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from src.memory import add_memory
 from src.logs import get_logger
 from src.ai import generate_response
-from src.schema import EnvironmentVariablesNotFoundError    
+from src.schema import AgentError, EmptyPromptError, EnvironmentVariablesNotFoundError    
 
 load_dotenv()
 logger = get_logger(__name__)
@@ -20,6 +20,7 @@ def _get_discord_client():
 
 
 async def agent_run(prompt: str) -> str:
+    """Run the agent on the prompt. On success returns the response and adds to memory. On error raises EmptyPromptError or AgentError; caller should send the error message (do not add to memory)."""
     res_message = generate_response(prompt)
     add_memory(f"User: {prompt}\n\n Agent: {res_message}\n\n")
     return res_message
@@ -39,10 +40,13 @@ async def on_message(message):
         return
 
     prompt = message.content
-    
-    res_message = await agent_run(prompt)
 
-    await message.channel.send(res_message)
+    try:
+        res_message = await agent_run(prompt)
+        await message.channel.send(res_message)
+    except (EmptyPromptError, AgentError) as e:
+        await message.channel.send(str(e))
+        # Do not add to memory on error
 
 def listen_to_discord():
     if not token:

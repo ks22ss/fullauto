@@ -4,6 +4,7 @@ from unittest.mock import patch, MagicMock
 import pytest
 
 from src import ai
+from src.schema import AgentError, EmptyPromptError
 
 
 def test_sanitize_prompt_empty_returns_empty():
@@ -26,9 +27,12 @@ def test_sanitize_prompt_preserves_normal_text():
     assert ai._sanitize_prompt(text) == text
 
 
-def test_generate_response_empty_prompt_returns_please_send_message():
-    assert ai.generate_response("") == "Please send a non-empty message."
-    assert ai.generate_response("   ") == "Please send a non-empty message."
+def test_generate_response_empty_prompt_raises():
+    with pytest.raises(EmptyPromptError) as exc_info:
+        ai.generate_response("")
+    assert "non-empty" in str(exc_info.value)
+    with pytest.raises(EmptyPromptError):
+        ai.generate_response("   ")
 
 
 @patch("src.ai.subprocess.run")
@@ -44,9 +48,12 @@ def test_generate_response_success_returns_stdout(mock_run):
 
 
 @patch("src.ai.subprocess.run")
-def test_generate_response_failure_returns_error_message(mock_run):
+def test_generate_response_failure_raises_agent_error(mock_run):
     mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="agent failed")
-    assert ai.generate_response("hello") == "Sorry, I encountered an error. Please try again later."
+    with pytest.raises(AgentError) as exc_info:
+        ai.generate_response("hello")
+    assert "error" in str(exc_info.value).lower()
+    assert exc_info.value.stderr == "agent failed"
     mock_run.assert_called_once()
 
 
