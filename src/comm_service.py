@@ -8,7 +8,6 @@ load_dotenv()
 
 import src.ai as ai
 from src.logs import get_logger
-from src.memory import add_memory
 from src.schema import AgentError, EmptyPromptError, EnvironmentVariablesNotFoundError    
 logger = get_logger(__name__)
 
@@ -26,6 +25,7 @@ async def agent_run(prompt: str) -> str:
     """Run the agent on the prompt. On success returns the response and adds to memory. On error raises EmptyPromptError or AgentError; caller should send the error message (do not add to memory)."""
     # Run blocking generate_response in a thread so the event loop can process Discord heartbeats
     res_message = await asyncio.to_thread(ai.generate_response, prompt)
+    from src.memory import add_memory  # local import to avoid circular on startup
     add_memory(f"User: {prompt}\n\n Agent: {res_message}\n\n")
     return res_message
 

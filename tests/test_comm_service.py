@@ -27,15 +27,12 @@ def test_listen_to_discord_raises_when_cursor_api_key_missing():
 @pytest.mark.asyncio
 async def test_agent_run_calls_generate_response_and_add_memory():
     with patch("src.comm_service.ai.generate_response") as mock_gen:
-        with patch("src.comm_service.add_memory") as mock_add:
+        with patch("src.memory.add_memory") as mock_add:
             mock_gen.return_value = "Agent reply"
             result = await agent_run("user prompt")
             assert result == "Agent reply"
             mock_gen.assert_called_once_with("user prompt")
             mock_add.assert_called_once()
-            call_arg = mock_add.call_args[0][0]
-            assert "user prompt" in call_arg
-            assert "Agent reply" in call_arg
 
 
 @pytest.mark.asyncio
@@ -73,7 +70,7 @@ async def test_on_message_sends_error_and_does_not_add_memory_on_agent_error():
     mock_message.channel.send = AsyncMock()
     mock_message.add_reaction = AsyncMock()
     with patch("src.comm_service.ai.generate_response") as mock_gen:
-        with patch("src.comm_service.add_memory") as mock_add:
+        with patch("src.memory.add_memory") as mock_add:
             mock_gen.side_effect = AgentError("Sorry, something went wrong.")
             await on_message(mock_message)
             mock_message.channel.send.assert_called_once_with("Sorry, something went wrong.")

@@ -9,8 +9,8 @@ A fully autonomous agent application that uses **Cursor CLI** to write code, des
   - **Job runner** — Invoked on a schedule (e.g. cron or APScheduler). Runs the agent with a fixed prompt (e.g. from `sche_prompt.md`) for periodic work.
 
 - **Shared resources**
-  - **Memory** — Stored in `memory.json`. When the number of messages exceeds 5, the agent is asked to summarize them and memory is replaced with a single summary so size stays bounded.
-  - **Rules** — `.cursor/rules` define agent behavior (see Cursor docs). Recommended: always read the memory file.
+  - **Memory** — Persisted via `persistqueue` (FIFO) at `/root/.fullauto_memory`; when >5 messages, the agent is asked to summarize and memory is replaced with a single summary.
+  - **Rules** — `.cursor/rules` define agent behavior (see Cursor docs).
   - **sche_prompt.md** — Can be written by the agent; read by the job runner as the source of periodic tasks.
 
 ## Prerequisites
@@ -88,6 +88,7 @@ Tests cover schema, logs, AI (sanitization and mocked agent), memory (load/save,
 |----------------|----------------------------------------------|
 | `discord.py`   | Discord bot API; message handling.           |
 | `APScheduler`  | Scheduling for periodic job runner.          |
+| `persistqueue` | Disk-backed FIFO memory at `/root/.fullauto_memory`. |
 | `python-dotenv`| Load `DISCORD_TOKEN`, `CURSOR_API_KEY` from `.env`. |
 | `typer`       | CLI for `discord-client` and `job-runner`.   |
 
@@ -118,16 +119,15 @@ full_auto_agent/
 │   ├── test_memory.py
 │   ├── test_comm_service.py
 │   └── test_main.py
-├── memory.json          # Created at runtime; conversation memory
 └── sche_prompt.md       # Optional; prompt for job-runner
 ```
 
 ## Flow summary
 
 1. User sends a message in Discord → Discord client receives it.
-2. Client runs the Cursor CLI agent with the message as the prompt (no shell; prompt is sanitized). Agent may read/write memory and rules.
-3. Agent output is sent back to the user and appended to `memory.json`. If message count > 5, the agent is asked to summarize and memory is replaced with one summary.
-4. On a schedule, `job-runner` runs the agent (e.g. with prompt from `sche_prompt.md`) for periodic tasks, using the same memory and rules.
+2. Client runs the Cursor CLI agent with the message as the prompt (no shell; prompt is sanitized). Agent may read rules.
+3. Agent output is sent back to the user and stored in memory (FIFO). When count >5, messages are summarized and replaced with one summary entry.
+4. On a schedule, `job-runner` runs the agent (e.g. with prompt from `sche_prompt.md`) for periodic tasks, using the same rules and memory.
 
 ## License
 

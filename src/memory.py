@@ -1,30 +1,21 @@
-import json
+"""Persisted memory using persistqueue FIFO with summarization."""
+
 import os
+from pathlib import Path
+
+import persistqueue
 
 from src.ai import generate_response
 from src.logs import get_logger
 
 logger = get_logger(__name__)
 
-memory_file = "memory.json"
+# Fixed absolute storage directory
+QUEUE_DIR = Path("/root/.fullauto_memory")
+QUEUE_DIR.mkdir(parents=True, exist_ok=True)
+queue = persistqueue.Queue(str(QUEUE_DIR))
+
 MAX_MESSAGES_BEFORE_SUMMARY = 5
-
-
-def _load_messages() -> list[str]:
-    """Read memory.json and return the list of messages. Returns [] if file missing or invalid."""
-    if not os.path.isfile(memory_file):
-        return []
-
-    with open(memory_file, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    
-    return data.get("messages", []) if isinstance(data, dict) else []
-
-
-def _save_messages(messages: list[str]) -> None:
-    """Write the list of messages to memory.json."""
-    with open(memory_file, "w", encoding="utf-8") as f:
-        json.dump({"messages": messages}, f, ensure_ascii=False, indent=2)
 
 
 def _summarize_messages(messages: list[str]) -> str:
@@ -39,28 +30,35 @@ def _summarize_messages(messages: list[str]) -> str:
 
 
 def add_memory(message: str) -> None:
-    """Append a message to memory. If there are more than MAX_MESSAGES_BEFORE_SUMMARY messages, summarize and replace with one summary."""
-    messages = _load_messages()
-    messages.append(message.strip())
-    count = len(messages)
-
-    if count > MAX_MESSAGES_BEFORE_SUMMARY:
-        logger.info("Memory has %d messages; summarizing via agent", count)
-        summary = _summarize_messages(messages)
-        summary = summary.strip()
+    """Append a message; if total > MAX, summarize and replace with one summary."""
+    msg = (message or "").strip()
+    if not msg:
+        return
+    queue.put(msg)
+    if queue.qsize() > MAX_MESSAGES_BEFORE_SUMMARY:
+        logger.info("Memory has %d messages; summarizing via agent", queue.qsize())
+        items: list[str] = []
+        try:
+            while True:
+                items.append(queue.get_nowait())
+        except Exception:
+            pass
+        if not items:
+            return
+        summary = (_summarize_messages(items) or "").strip()
         if summary:
-            messages = [summary]
-            _save_messages(messages)
+            queue.put(summary)
             logger.info("Memory replaced with 1 summary entry")
         else:
-            # Summarization failed; keep recent messages only
-            messages = messages[-MAX_MESSAGES_BEFORE_SUMMARY:]
-            _save_messages(messages)
-            logger.warning("Summarization returned empty; kept last %d messages", len(messages))
-    else:
-        _save_messages(messages)
+            # summarization failed; keep last MAX messages
+            for m in items[-MAX_MESSAGES_BEFORE_SUMMARY:]:
+                queue.put(m)
+            logger.warning(
+                "Summarization returned empty; kept last %d messages",
+                queue.qsize(),
+            )
 
 
 def get_message_count() -> int:
     """Return the number of messages currently in memory."""
-    return len(_load_messages())
+    return queue.qsize()
