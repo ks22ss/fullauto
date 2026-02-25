@@ -2,31 +2,14 @@ import os
 import re
 import subprocess
 
+from src.config_store import get_repo_path
 from src.logs import get_logger
 from src.schema import AgentError, EmptyPromptError, EnvironmentVariablesNotFoundError
 
 logger = get_logger(__name__)
 
-def _find_repo_root() -> str:
-    """Return the repo root by walking up until .git is found; fallback to parent of src/."""
-    path = os.path.abspath(os.path.dirname(__file__))
-    while path and path != os.path.dirname(path):
-        if os.path.isdir(os.path.join(path, ".git")):
-            return path
-        path = os.path.dirname(path)
-    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-
-def _resolve_repo_path() -> str:
-    """Use REPO_PATH env if absolute+existing, else repo root."""
-    env_path = os.getenv("REPO_PATH")
-    if env_path and os.path.isabs(env_path) and os.path.isdir(env_path):
-        return env_path
-    return _find_repo_root()
-
-
-# Mutable so it can be updated at runtime (e.g., via /cwd command).
-repo_path = _resolve_repo_path()
+# Mutable so it can be updated at runtime (e.g., via /cwd command) via config_store.
+repo_path = get_repo_path()
 
 
 def _sanitize_prompt(prompt: str) -> str:

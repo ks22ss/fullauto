@@ -27,12 +27,15 @@ def test_listen_to_discord_raises_when_cursor_api_key_missing():
 @pytest.mark.asyncio
 async def test_agent_run_calls_generate_response_and_add_memory():
     with patch("src.comm_service.ai.generate_response") as mock_gen:
-        with patch("src.memory.add_memory") as mock_add:
-            mock_gen.return_value = "Agent reply"
-            result = await agent_run("user prompt")
-            assert result == "Agent reply"
-            mock_gen.assert_called_once_with("user prompt")
-            mock_add.assert_called_once()
+        with patch("src.comm_service.add_memory") as mock_add:
+            with patch("src.comm_service.list_messages", return_value=["prior"]):
+                mock_gen.return_value = "Agent reply"
+                result = await agent_run("user prompt")
+                assert result == "Agent reply"
+                mock_gen.assert_called_once()
+                args = mock_gen.call_args[0][0]
+                assert "prior" in args and "user prompt" in args
+                mock_add.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -87,13 +90,12 @@ async def test_on_message_cwd_updates_repo_path_and_persists():
     with patch("os.path.isabs", return_value=True):
         with patch("os.path.isdir", return_value=True):
             with patch("src.comm_service.ai") as mock_ai:
-                with patch("src.comm_service.set_key") as mock_set_key:
-                    mock_ai.REPO_PATH = "/tmp/old"
-                    await on_message(mock_message)
-                    assert mock_ai.REPO_PATH == "/tmp/newpath"
-                    env_path = os.path.join("/tmp/newpath", ".env")
-                    mock_set_key.assert_called_once_with(env_path, "REPO_PATH", "/tmp/newpath")
-                    mock_message.channel.send.assert_called_once()
+                with patch("src.comm_service.set_repo_path") as mock_set_repo:
+                    with patch("src.comm_service.get_repo_path", return_value="/tmp/newpath"):
+                        await on_message(mock_message)
+                        mock_set_repo.assert_called_once_with("/tmp/newpath")
+                        assert mock_ai.repo_path == "/tmp/newpath"
+                        mock_message.channel.send.assert_called_once()
 
 
 @pytest.mark.asyncio

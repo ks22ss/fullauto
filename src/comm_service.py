@@ -7,7 +7,9 @@ from dotenv import load_dotenv, set_key
 load_dotenv()
 
 import src.ai as ai
+from src.config_store import get_repo_path, set_repo_path
 from src.logs import get_logger
+from src.memory import add_memory, list_messages
 from src.schema import AgentError, EmptyPromptError, EnvironmentVariablesNotFoundError    
 logger = get_logger(__name__)
 
@@ -24,9 +26,13 @@ def _get_discord_client():
 async def agent_run(prompt: str) -> str:
     """Run the agent on the prompt. On success returns the response and adds to memory. On error raises EmptyPromptError or AgentError; caller should send the error message (do not add to memory)."""
     # Run blocking generate_response in a thread so the event loop can process Discord heartbeats
-    res_message = await asyncio.to_thread(ai.generate_response, prompt)
-    from src.memory import add_memory  # local import to avoid circular on startup
+    prior = list_messages()
+    combined_prompt = f"{prompt}"
+    if prior:
+        combined_prompt = "\n".join(prior) + "\n\n" + prompt
+    res_message = await asyncio.to_thread(ai.generate_response, combined_prompt)
     add_memory(f"User: {prompt}\n\n Agent: {res_message}\n\n")
+
     return res_message
 
 
@@ -45,7 +51,7 @@ async def on_message(message):
     await message.add_reaction("🤖")
 
     prompt = message.content
-    # Handle /cwd <absolute_path> to update working directory for the agent and persist to .env
+    # Handle /cwd <absolute_path> to update working directory for the agent and persist to config.json
     if prompt.startswith("/cwd"):
         parts = prompt.split(maxsplit=1)
         if len(parts) < 2 or not parts[1].strip():
@@ -58,15 +64,9 @@ async def on_message(message):
         if not os.path.isdir(new_path):
             await message.channel.send("Path does not exist or is not a directory.")
             return
-        ai.REPO_PATH = new_path
-        env_path = os.path.join(ai.REPO_PATH, ".env")
-        try:
-            set_key(env_path, "REPO_PATH", new_path)
-        except Exception as exc:
-            logger.warning("Failed to persist REPO_PATH to %s: %s", env_path, exc)
-            await message.channel.send(f"Working directory set to: {new_path} (warning: could not persist to .env)")
-        else:
-            await message.channel.send(f"Working directory set to: {new_path}")
+        set_repo_path(new_path)
+        ai.repo_path = get_repo_path()
+        await message.channel.send(f"Working directory set to: {new_path}")
         return
 
     async with message.channel.typing():

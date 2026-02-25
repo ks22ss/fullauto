@@ -9,7 +9,7 @@ A fully autonomous agent application that uses **Cursor CLI** to write code, des
   - **Job runner** — Invoked on a schedule (e.g. cron or APScheduler). Runs the agent with a fixed prompt (e.g. from `sche_prompt.md`) for periodic work.
 
 - **Shared resources**
-  - **Memory** — Persisted via `persistqueue` (FIFO) at `/root/.fullauto_memory`; when >5 messages, the agent is asked to summarize and memory is replaced with a single summary.
+  - **Memory** — Persisted via `persistqueue` (FIFO) at `/root/.fullauto/memory`; when >5 messages, the agent is asked to summarize and memory is replaced with a single summary. Config (including `REPO_PATH`) is stored at `/root/.fullauto/config.json`.
   - **Rules** — `.cursor/rules` define agent behavior (see Cursor docs).
   - **sche_prompt.md** — Can be written by the agent; read by the job runner as the source of periodic tasks.
 

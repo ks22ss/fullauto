@@ -6,12 +6,13 @@ from pathlib import Path
 import persistqueue
 
 from src.ai import generate_response
+from src.config_store import get_repo_path
 from src.logs import get_logger
 
 logger = get_logger(__name__)
 
 # Fixed absolute storage directory
-QUEUE_DIR = Path("/root/.fullauto_memory")
+QUEUE_DIR = Path("/root/.fullauto/memory")
 QUEUE_DIR.mkdir(parents=True, exist_ok=True)
 queue = persistqueue.Queue(str(QUEUE_DIR))
 
@@ -62,3 +63,16 @@ def add_memory(message: str) -> None:
 def get_message_count() -> int:
     """Return the number of messages currently in memory."""
     return queue.qsize()
+
+
+def list_messages() -> list[str]:
+    """Return all messages without removing them from the queue."""
+    messages: list[str] = []
+    count = queue.qsize()
+    for _ in range(count):
+        item = queue.get()
+        messages.append(item)
+    # Requeue in original order
+    for item in messages:
+        queue.put(item)
+    return messages
