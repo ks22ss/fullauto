@@ -41,13 +41,13 @@ async def on_message(message):
     await message.add_reaction("🤖")
 
     prompt = message.content
-
-    try:
-        res_message = await agent_run(prompt)
-        await message.channel.send(res_message)
-    except (EmptyPromptError, AgentError) as e:
-        await message.channel.send(str(e))
-        # Do not add to memory on error
+    async with message.channel.typing():
+        try:
+            res_message = await agent_run(prompt)
+            await message.channel.send(res_message)
+        except (EmptyPromptError, AgentError) as e:
+            await message.channel.send(str(e))
+            # Do not add to memory on error
 
 def listen_to_discord():
     if not token:
