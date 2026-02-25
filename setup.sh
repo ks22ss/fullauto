@@ -19,8 +19,8 @@ fi
 
 # Default Cursor CLI model (use Composer 1.5); set in .env for the app, or export in shell
 if ! grep -q 'CURSOR_MODEL' ~/.bashrc 2>/dev/null; then
-  echo 'export CURSOR_MODEL="Composer 1.5"' >> ~/.bashrc
-  echo "Added CURSOR_MODEL=Composer 1.5 to ~/.bashrc"
+  echo 'export CURSOR_MODEL="composer-1.5"' >> ~/.bashrc
+  echo "Added CURSOR_MODEL=composer-1.5 to ~/.bashrc"
 fi
 
 # Do NOT write a placeholder API key to .bashrc. Set CURSOR_API_KEY in .env for the app, or export it in your shell.

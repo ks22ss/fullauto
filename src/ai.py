@@ -31,13 +31,12 @@ def generate_response(prompt: str) -> str:
     if not sanitized:
         raise EmptyPromptError("Please send a non-empty message.")
 
-    model = os.getenv("CURSOR_MODEL", "Composer 1.5")
+    model = os.getenv("CURSOR_MODEL", "composer-1.5")
     cmd = [
         "agent",
-        "-p", "--force", "--mode=agent",
-        "--model", model,
-        "--output-format", "json",
+        "-p", "--force", "--model", model,
         sanitized,
+        "--output-format=text",
     ]
     result = subprocess.run(
         cmd,
