@@ -1,0 +1,13 @@
+# Full Auto Agent – Python dependencies
+
+# Discord bot and message handling
+discord.py>=2.3.0
+
+# Scheduler for periodic Agent B runs
+APScheduler>=3.10.0
+
+# Persistent, thread-safe shared memory queue (Agent A + Agent B)
+redis>=5.0.0
+
+# Environment and secrets (e.g. DISCORD_TOKEN)
+python-dotenv>=1.0.0
