@@ -2,7 +2,7 @@
 
 A fully autonomous agent application that uses **Cursor CLI** to write code, design, build, test, and push to GitHub. Users interact via Discord, and scheduled tasks run automatically based on cron schedules.
 
-> **Note:** This project currently only works on **Linux**. Windows and macOS support is not available at this time.
+> **Note:** This project currently only works on **Linux**. Windows and macOS are not tested.
 
 ## Features
 
@@ -22,6 +22,7 @@ A fully autonomous agent application that uses **Cursor CLI** to write code, des
 ## Installation
 
 1. **Setup the repository**
+  clone the repository to your VM and run:
    ```bash
    git clone https://github.com/ks22ss/fullauto.git
    cd fullauto
