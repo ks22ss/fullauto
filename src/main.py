@@ -7,7 +7,7 @@ import typer
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-from src.comm_service import agent_run, listen_to_discord
+from src.comm_service import agent_run, listen_to_discord, start_discord_client
 from src.logs import get_logger
 
 logger = get_logger(__name__)
@@ -148,6 +148,34 @@ async def _run_scheduler():
 def scheduler():
     """Run the scheduler to execute tasks based on their cron schedules."""
     asyncio.run(_run_scheduler())
+
+async def _run_all():
+    """Run both Discord client and scheduler concurrently"""
+    logger.info("Starting fullauto services...")
+    
+    # Create tasks for both services
+    discord_task = asyncio.create_task(start_discord_client())
+    scheduler_task = asyncio.create_task(_run_scheduler())
+    
+    try:
+        # Wait for both tasks (they run concurrently)
+        await asyncio.gather(discord_task, scheduler_task)
+    except KeyboardInterrupt:
+        logger.info("Shutting down services...")
+        # Cancel both tasks
+        discord_task.cancel()
+        scheduler_task.cancel()
+        # Wait for cleanup
+        try:
+            await asyncio.gather(discord_task, scheduler_task, return_exceptions=True)
+        except Exception:
+            pass
+        logger.info("Services stopped.")
+
+@app.command()
+def run():
+    """Run both Discord client and scheduler concurrently."""
+    asyncio.run(_run_all())
 
 if __name__ == "__main__":
     app()

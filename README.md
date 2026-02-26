@@ -1,74 +1,147 @@
 # Full Auto Agent
 
-A fully autonomous agent application that uses **Cursor CLI** to write code, design, build, test, and push to GitHub. Users interact via Discord; a scheduled job runner can invoke the agent for periodic tasks (e.g. read `sche_prompt.md`, process GitHub PRs/issues, build/test/maintain).
+A fully autonomous agent application that uses **Cursor CLI** to write code, design, build, test, and push to GitHub. Users interact via Discord, and scheduled tasks run automatically based on cron schedules.
 
-## Architecture
+> **Note:** This project currently only works on **Linux**. Windows and macOS support is not available at this time.
 
-- **Two entrypoints**
-  - **Discord client** — Listens for messages, runs the Cursor CLI agent with the user message as the prompt, and sends the agent’s output back to Discord. Each exchange is appended to shared memory.
-  - **Job runner** — Invoked on a schedule (e.g. cron or APScheduler). Runs the agent with a fixed prompt (e.g. from `sche_prompt.md`) for periodic work.
+## Features
 
-- **Shared resources**
-  - **Memory** — Persisted via `persistqueue` (FIFO) at `/root/.fullauto/memory`; when >5 messages, the agent is asked to summarize and memory is replaced with a single summary. Config (including `REPO_PATH`) is stored at `/root/.fullauto/config.json`.
-  - **Rules** — `.cursor/rules` define agent behavior (see Cursor docs).
-  - **sche_prompt.md** — Can be written by the agent; read by the job runner as the source of periodic tasks.
+- **Discord Integration** - Interact with the agent via Discord messages
+- **Scheduled Tasks** - Automatically run tasks on a schedule (cleanup, PR reviews, security checks, etc.)
+- **Shared Memory** - Agent maintains context across interactions
+- **Task Scheduling** - Configure tasks with cron expressions in `src/tasks/.config.json`
 
 ## Prerequisites
 
+- **Linux** operating system
 - **Python 3.12+**
-- **Cursor CLI** installed and on your `PATH` (Linux/macOS; for Windows see project notes)
+- **Cursor CLI** installed and on your `PATH`
 - A **Discord server**, a **Discord bot**, and its **token**
-- **Cursor API key** for headless/auth (create under Cursor → Integrations → User API Keys)
+- **Cursor API key** (create under Cursor → Integrations → User API Keys)
 
-## Setup
+## Installation
 
-1. **Clone and enter the repo**
+1. **Setup the repository**
    ```bash
-   cd full_auto_agent
+   git clone https://github.com/ks22ss/fullauto.git
+   cd fullauto
+   source setup.sh
    ```
 
-2. **Create a virtual environment and install dependencies**
-   ```bash
-   python -m venv .venv
-   .venv\Scripts\activate   # Windows
-   # source .venv/bin/activate  # macOS/Linux
-   pip install -e .
-   # or with uv: uv pip install -e .
-   ```
-
-3. **Configure environment**
-   - Copy `.env.example` to `.env`.
-   - Set `DISCORD_TOKEN` and `CURSOR_API_KEY`.
-   - Optional: `CURSOR_MODEL` (default: `Composer 1.5`) — set to use a different Cursor CLI model.
-   - Configure Cursor and repo settings as needed for the agent workspace.
-
-4. **Cursor CLI** (Linux/macOS)
-   - **Option A:** Run the setup script to install Cursor CLI, add `~/.local/bin` to PATH, and set default model to Composer 1.5:
+2. **Configure environment variables**
+   - Set the following variables:
      ```bash
-     chmod +x setup.sh && ./setup.sh
-     source ~/.bashrc   # or open a new terminal
+     echo 'export DISCORD_TOKEN="paste_your_discord_bot_token"' >> ~/.bashrc
+     echo 'export CURSOR_API_KEY="paste_your_cursor_api_key"' >> ~/.bashrc
+     echo 'export GH_TOKEN="paste_your_github_token"' >> ~/.bashrc
+     source ~/.bashrc  # or open a new terminal
      ```
-   - **Option B:** Install Cursor CLI yourself and ensure the `agent` command is on your PATH. The app uses `CURSOR_MODEL` from `.env` or the environment (default `Composer 1.5`).
+   
+   **Why these are needed:**
+   
+   - **Discord Token (`DISCORD_TOKEN`)**: Required for the Discord bot to connect and receive messages. The bot listens for your commands and sends agent responses back to Discord.
+     - **Setup**: Go to [Discord Developer Portal](https://discord.com/developers/applications) → Create New Application → Bot → Copy Token
+   
+   - **Cursor API Key (`CURSOR_API_KEY`)**: Authenticates the agent with Cursor's API to execute code generation and analysis tasks. This is how the agent actually performs its work.
+     - **Setup**: Open Cursor IDE → Settings → Integrations → User API Keys → Create New Key → Copy the key
+   
+   - **GitHub Token (`GH_TOKEN`)**: Allows the agent to interact with GitHub repositories (push code, create PRs, manage issues). Required for scheduled tasks that modify repositories.
+     - **Setup**: Go to [GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)](https://github.com/settings/tokens) → Generate new token → Select `repo` scope → Copy token
 
-5. **Rules and memory**
-   - Populate `.cursor/rules` to shape agent behavior.
-   - Ensure the rule to read the memory file is present so the agent has shared context.
 
-## Running the app
+## Usage
 
-- **Discord client** (message handler; runs agent on each user message):
-  ```bash
-  python -m src.main discord-client
-  ```
-  Or with Typer CLI: `uv run python -m src.main discord-client`
+After installation, you can use the `fullauto` CLI command:
 
-- **Job runner** (scheduled agent run):
+### Run Both Services (Recommended)
 
-  ```bash
-  python -m src.main job-runner
-  ```
+Run the Discord client and scheduler together:
 
-Run the Discord client in one process; schedule `job-runner` via cron, APScheduler, or your scheduler of choice.
+```bash
+fullauto run
+```
+
+This starts both:
+- **Discord client** - Listens for messages and responds via Discord
+- **Scheduler** - Runs scheduled tasks based on cron expressions
+
+### Run Services Individually
+
+**Discord client only:**
+```bash
+fullauto discord-client
+```
+
+**Scheduler only:**
+```bash
+fullauto scheduler
+```
+
+### View Available Commands
+
+```bash
+fullauto --help
+```
+
+## Task Configuration
+
+Scheduled tasks are configured in `src/tasks/.config.json`. Each task has:
+- A **schedule** (cron expression)
+- A **description**
+- A corresponding markdown file in `src/tasks/` with task instructions
+
+Example configuration:
+```json
+{
+  "tasks": {
+    "cleanup": {
+      "schedule": "0 1 * * *",
+      "description": "Every day at 1am"
+    },
+    "pr_review": {
+      "schedule": "20 * * * *",
+      "description": "Every hour at 20 minutes"
+    }
+  }
+}
+```
+
+### Available Tasks
+
+- **cleanup** - Repository hygiene (stale issues/PRs, TODO comments, broken links)
+- **increment** - Incremental code quality improvements
+- **security_check** - Security vulnerability scanning
+- **pr_review** - Automated PR reviews and fixes
+- **issue_fixer** - Automatic issue resolution
+- **health_check** - System health monitoring
+
+Each task's instructions are defined in `src/tasks/<task_name>.md`.
+
+## Discord Commands
+
+When the Discord client is running, you can interact with the agent:
+
+- **Send a message** - The agent will process your message and respond
+- **`/cwd <absolute_path>`** - Change the working directory for the agent
+
+
+## How It Works
+
+1. **Discord Interaction**
+   - User sends a message in Discord
+   - Discord client receives it and runs the Cursor CLI agent
+   - Agent output is sent back to Discord and stored in memory
+
+2. **Scheduled Tasks**
+   - Scheduler checks cron expressions from `src/tasks/.config.json`
+   - When a task is due, it reads the corresponding markdown file
+   - Task instructions are passed to the agent for execution
+   - Results are logged
+
+3. **Memory Management**
+   - All interactions are stored in shared memory
+   - When memory exceeds 5 messages, it's automatically summarized
+   - Memory persists across sessions
 
 ## Testing
 
@@ -76,59 +149,16 @@ Install dev dependencies and run tests:
 
 ```bash
 pip install -e ".[dev]"
-# or: uv pip install -e ".[dev]"
 pytest tests/ -v
 ```
 
-Tests cover schema, logs, AI (sanitization and mocked agent), memory (load/save, summarization when > 5 messages), Discord comm service (env validation, `agent_run`, `on_message`), and main CLI commands. Mocks are used for subprocess, file I/O, and Discord so no real agent or Discord connection is required.
+## Troubleshooting
 
-## Packages (dependencies)
-
-| Package        | Purpose                                      |
-|----------------|----------------------------------------------|
-| `discord.py`   | Discord bot API; message handling.           |
-| `APScheduler`  | Scheduling for periodic job runner.          |
-| `persistqueue` | Disk-backed FIFO memory at `/root/.fullauto_memory`. |
-| `python-dotenv`| Load `DISCORD_TOKEN`, `CURSOR_API_KEY` from `.env`. |
-| `typer`       | CLI for `discord-client` and `job-runner`.   |
-
-See `pyproject.toml` for versions. Optional dev deps: `pytest`, `pytest-asyncio`.
-
-## Project layout
-
-```
-full_auto_agent/
-├── README.md
-├── LICENSE
-├── pyproject.toml
-├── setup.sh             # Cursor CLI install + PATH + CURSOR_MODEL (Linux/macOS)
-├── .env.example
-├── .cursor/
-│   └── rules/           # Agent behavior rules
-├── src/
-│   ├── main.py          # Typer app: discord-client, job-runner
-│   ├── comm_service.py  # Discord client + agent_run
-│   ├── ai.py            # Cursor CLI agent invocation (sanitize + subprocess)
-│   ├── memory.py        # memory.json load/save and summarization
-│   ├── logs.py          # Logging config
-│   └── schema.py        # EnvironmentVariablesNotFoundError
-├── tests/
-│   ├── test_schema.py
-│   ├── test_logs.py
-│   ├── test_ai.py
-│   ├── test_memory.py
-│   ├── test_comm_service.py
-│   └── test_main.py
-└── sche_prompt.md       # Optional; prompt for job-runner
-```
-
-## Flow summary
-
-1. User sends a message in Discord → Discord client receives it.
-2. Client runs the Cursor CLI agent with the message as the prompt (no shell; prompt is sanitized). Agent may read rules.
-3. Agent output is sent back to the user and stored in memory (FIFO). When count >5, messages are summarized and replaced with one summary entry.
-4. On a schedule, `job-runner` runs the agent (e.g. with prompt from `sche_prompt.md`) for periodic tasks, using the same rules and memory.
+- **Command not found**: Make sure you've installed the package with `pip install -e .`
+- **Discord connection fails**: Verify `DISCORD_TOKEN` is set correctly in `.env`
+- **Agent errors**: Ensure Cursor CLI is installed and `CURSOR_API_KEY` is valid
+- **Tasks not running**: Check cron expressions in `src/tasks/.config.json` are valid
 
 ## License
 
-This project is licensed under the **MIT License**. You may use, copy, modify, and distribute it under the terms of that license. See [LICENSE](LICENSE) for the full text.
+This project is licensed under the **MIT License**. See [LICENSE](LICENSE) for details.

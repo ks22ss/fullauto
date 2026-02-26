@@ -84,3 +84,12 @@ def listen_to_discord():
         raise EnvironmentVariablesNotFoundError("CURSOR_API_KEY is not set.")
 
     client.run(token)
+
+async def start_discord_client():
+    """Start Discord client in async mode (for use with concurrent services)"""
+    if not token:
+        raise EnvironmentVariablesNotFoundError("DISCORD_TOKEN is not set.")
+    if not cursor_api_key:
+        raise EnvironmentVariablesNotFoundError("CURSOR_API_KEY is not set.")
+    
+    await client.start(token)
