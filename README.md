@@ -77,6 +77,14 @@ fullauto discord-client
 fullauto scheduler
 ```
 
+### Reset Memory
+
+Clear all stored conversation history:
+
+```bash
+fullauto reset-memory-cmd
+```
+
 ### View Available Commands
 
 ```bash
@@ -123,6 +131,7 @@ When the Discord client is running, you can interact with the agent:
 
 - **Send a message** - The agent will process your message and respond
 - **`/cwd <absolute_path>`** - Change the working directory for the agent
+- **`/reset-memory`** - Clear all stored conversation history (starts fresh)
 
 
 ## How It Works

@@ -9,6 +9,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 from src.comm_service import agent_run, listen_to_discord, start_discord_client
 from src.logs import get_logger
+from src.memory import reset_memory
 
 logger = get_logger(__name__)
 
@@ -176,6 +177,13 @@ async def _run_all():
 def run():
     """Run both Discord client and scheduler concurrently."""
     asyncio.run(_run_all())
+
+@app.command()
+def reset_memory_cmd():
+    """Reset/clear all stored memory (conversation history)."""
+    logger.info("Resetting memory...")
+    reset_memory()
+    logger.info("Memory reset completed.")
 
 if __name__ == "__main__":
     app()

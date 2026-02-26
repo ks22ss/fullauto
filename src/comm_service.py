@@ -9,7 +9,7 @@ load_dotenv()
 import src.ai as ai
 from src.config_store import get_repo_path, set_repo_path
 from src.logs import get_logger
-from src.memory import add_memory, list_messages
+from src.memory import add_memory, list_messages, reset_memory
 from src.schema import AgentError, EmptyPromptError, EnvironmentVariablesNotFoundError    
 logger = get_logger(__name__)
 
@@ -67,6 +67,12 @@ async def on_message(message):
         set_repo_path(new_path)
         ai.repo_path = get_repo_path()
         await message.channel.send(f"Working directory set to: {new_path}")
+        return
+    
+    # Handle /reset-memory to clear all stored conversation history
+    if prompt.startswith("/reset-memory"):
+        reset_memory()
+        await message.channel.send("✅ Memory reset: All conversation history has been cleared.")
         return
 
     async with message.channel.typing():
