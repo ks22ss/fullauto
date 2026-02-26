@@ -165,13 +165,14 @@ When the Discord client is running, you can interact with the agent:
 Install dev dependencies and run tests:
 
 ```bash
-pip install -e ".[dev]"
+uv sync --extra dev
+# or: uv pip install -e ".[dev]"
 pytest tests/ -v
 ```
 
 ## Troubleshooting
 
-- **Command not found**: Make sure you've installed the package with `pip install -e .`
+- **Command not found**: Make sure you've installed the package with `uv sync` or `uv pip install -e .`
 - **Discord connection fails**: Verify `DISCORD_TOKEN` is set correctly in `.env`
 - **Agent errors**: Ensure Cursor CLI is installed and `CURSOR_API_KEY` is valid
 - **Tasks not running**: Check cron expressions in `src/tasks/.config.json` are valid

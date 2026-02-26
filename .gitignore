@@ -27,3 +27,14 @@ Thumbs.db
 # Logs (if you write to files)
 *.log
 logs/
+fullauto.log
+
+# UV
+uv.lock.bak
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

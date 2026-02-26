@@ -1,7 +1,7 @@
 [project]
 name = "full-auto-agent"
 version = "0.1.0"
-description = "Add your description here"
+description = "Fully autonomous agent application that uses Cursor CLI to automate software development workflows via Discord integration and scheduled task execution"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
