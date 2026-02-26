@@ -1,24 +1,24 @@
 {
   "tasks": {
     "cleanup": {
-      "schedule": "0 1 * * *",
+      "schedule": "0 4 * * *",
       "description": "Every day at 1am"
     },
-    "increment": {
-      "schedule": "0 * * * *",
-      "description": "Every hour at 00 minutes"
+    "maintenance": {
+      "schedule": "50 * * * *",
+      "description": "Every hour at 50 minutes"
     },
     "security_check": {
       "schedule": "0 0 * * 0",
       "description": "Every week (Sunday at midnight)"
     },
     "pr_review": {
-      "schedule": "20 * * * *",
-      "description": "Every hour at 20 minutes"
+      "schedule": "30 * * * *",
+      "description": "Every hour at 30 minutes"
     },
-    "issue_fixer": {
-      "schedule": "40 * * * *",
-      "description": "Every hour at 40 minutes"
+    "feature_inventor": {
+      "schedule": "10 * * * *",
+      "description": "Every hour at 10 minutes"
     },
     "health_check": {
       "schedule": "0 7 * * *",
