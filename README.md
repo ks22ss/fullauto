@@ -27,6 +27,8 @@ A fully autonomous agent application that uses **Cursor CLI** to write code, des
    git clone https://github.com/ks22ss/fullauto.git
    cd fullauto
    source setup.sh
+   uv sync
+   source .venv/bin/activate
    ```
 
 2. **Configure environment variables**
