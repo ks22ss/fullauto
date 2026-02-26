@@ -64,6 +64,11 @@ Run the Discord client and scheduler together:
 fullauto run
 ```
 
+background
+```bash
+nohup uv run fullauto run > fullauto.log 2>&1 &
+```
+
 This starts both:
 - **Discord client** - Listens for messages and responds via Discord
 - **Scheduler** - Runs scheduled tasks based on cron expressions
