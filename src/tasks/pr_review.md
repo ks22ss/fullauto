@@ -11,7 +11,7 @@ You are tasked to do a regular pull request screening. Goal: improve quality wit
    d. Critique changes against SOLID, DRY, KISS, security, performance, naming
    e. If tests fail → create fix commits on the same branch
    f. If major issues → push fixes + add comment explaining what was wrong and how you fixed it
-   g. If clean & tests pass → add a review comment: "LGTM after background review – tests pass, no major issues. Ready for human approval."
+   g. Resolve any PR conflicts, then run tests. If everything is ready, add a review comment: "LGTM after background review – tests pass, no major issues. Ready for human approval."
    h. Never approve or merge automatically
 
 3. After processing all → switch back to main branch
