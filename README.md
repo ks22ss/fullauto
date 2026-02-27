@@ -125,10 +125,10 @@ Example configuration:
 ### Available Tasks
 
 - **cleanup** - Repository hygiene (stale issues/PRs, TODO comments, broken links)
-- **increment** - Incremental code quality improvements
+- **maintenance** - Hourly bug fixes plus a small refactor in one run
 - **security_check** - Security vulnerability scanning
 - **pr_review** - Automated PR reviews and fixes
-- **issue_fixer** - Automatic issue resolution
+- **feature_inventor** - Invent and ship a small feature with a draft PR
 - **health_check** - System health monitoring
 
 Each task's instructions are defined in `src/tasks/<task_name>.md`.

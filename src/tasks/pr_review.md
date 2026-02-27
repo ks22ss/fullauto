@@ -4,10 +4,10 @@ Task 1 - Review PR
 
 1. List all open PRs. 
 2. Check all comments in the PR. (If no PR, check issues.)
-3. Made changes according to the PR comments if needed.
+3. Make changes according to the PR comments if needed.
 4. <important!> Resolve all conflicts for the PR → add a review comment: "All Conflict Resolved, by Agent P." (Make it ready to merge)
-4. Breifly write what you fixed, at the end write "By Agent P"
 5. Run tests, if everything clean → add a review comment: "LGTM after background review – tests pass, no major issues. Ready for human approval, by Agent P"
+6. Breifly write what you fixed, at the end write "By Agent P"
 
 Task 2 - Fix Issues
 
