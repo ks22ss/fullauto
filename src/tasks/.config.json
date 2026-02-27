@@ -1,28 +1,20 @@
 {
   "tasks": {
     "cleanup": {
-      "schedule": "0 1 * * *",
-      "description": "Every day at 1am"
+      "schedule": "0 0 * * 0",
+      "description": "Every week (Monday at midnight)"
     },
     "increment": {
-      "schedule": "0 * * * *",
-      "description": "Every hour at 00 minutes"
+      "schedule": "15 */2 * * *",
+      "description": "At 15 minutes past the hour, every 2 hours"
     },
     "security_check": {
-      "schedule": "0 0 * * 0",
+      "schedule": "0 0 * * 1",
       "description": "Every week (Sunday at midnight)"
     },
     "pr_review": {
-      "schedule": "20 * * * *",
-      "description": "Every hour at 20 minutes"
-    },
-    "issue_fixer": {
-      "schedule": "40 * * * *",
-      "description": "Every hour at 40 minutes"
-    },
-    "health_check": {
-      "schedule": "0 7 * * *",
-      "description": "Every day at 7am"
+      "schedule": "50 */2 * * *",
+      "description": "At 50 minutes past the hour, every 2 hours"
     }
   }
 }
