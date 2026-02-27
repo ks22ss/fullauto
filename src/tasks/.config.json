@@ -15,6 +15,6 @@
     "pr_review": {
       "schedule": "50 */2 * * *",
       "description": "At 50 minutes past the hour, every 2 hours"
-    },
+    }
   }
 }
