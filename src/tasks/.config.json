@@ -1,20 +1,20 @@
 {
   "tasks": {
-    "cleanup": {
-      "schedule": "0 0 * * 0",
-      "description": "Every week (Monday at midnight)"
+    "refactor": {
+      "schedule": "35 */2 * * *",
+      "description": "At 35 minutes past the hour, every 2 hours"
     },
-    "increment": {
+    "features": {
       "schedule": "15 */2 * * *",
-      "description": "At 15 minutes past the hour, every 2 hours"
+      "description": "At 10 minutes past the hour, every 2 hours"
     },
     "security_check": {
       "schedule": "0 0 * * 1",
       "description": "Every week (Sunday at midnight)"
     },
     "pr_review": {
-      "schedule": "50 */2 * * *",
-      "description": "At 50 minutes past the hour, every 2 hours"
+      "schedule": "55 */2 * * *",
+      "description": "At 55 minutes past the hour, every 2 hours"
     }
   }
 }
