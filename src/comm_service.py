@@ -10,7 +10,7 @@ load_dotenv()
 import src.ai as ai
 from src.config_store import get_repo_path, set_repo_path
 from src.logs import get_logger
-from src.memory import add_memory, list_messages, reset_memory
+from src.memory import add_turn, list_messages, reset_memory
 from src.schema import AgentError, EmptyPromptError, EnvironmentVariablesNotFoundError    
 logger = get_logger(__name__)
 
@@ -66,7 +66,7 @@ async def agent_run(prompt: str) -> str:
     if mem_prefix:
         combined_prompt = mem_prefix + "\n\n" + prompt
     res_message = await asyncio.to_thread(ai.generate_response, combined_prompt)
-    add_memory(f"User: {prompt}\n\n Agent: {res_message}\n\n")
+    add_turn(prompt, res_message, source="discord")
 
     return res_message
 
