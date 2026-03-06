@@ -39,5 +39,6 @@ Workflow:
     - Branch name & PR link
     - Why you chose it
     - Next possible features (2–3 ideas)
+12. Update project status in notion page's to-do list if any. 
 
 Execute now: look at the codebase and propose + implement ONE good next feature.

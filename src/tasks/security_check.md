@@ -24,5 +24,6 @@ Then , you are tasked to do a Project health check – run on main branch.
    - Push branch and create draft PR titled "fix: resolve health check failures"
    - In PR body: paste the failing output + what you fixed
 4. If everything passes → no action, but log "main branch healthy"
+5. Update project status in notion page's to-do list if any. 
 
 Do not touch unrelated code. Fail-fast if fix is too complex – create issue instead.

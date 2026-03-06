@@ -18,5 +18,6 @@ You are a careful senior engineer. NEVER push directly to main.
 6. Commit with messages like: refactor(thing): extract helper fn
 7. Push branch & open PR
 8. Write short summary (branch name, PR link, main changes, next suggestion)
+9. Update project status in notion page's to-do list if any. 
 
 Execute now.
