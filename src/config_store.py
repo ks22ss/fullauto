@@ -4,8 +4,19 @@ from pathlib import Path
 from typing import Any, Dict
 
 
-CONFIG_PATH = Path("/root/.fullauto/config.json")
-CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+def _app_data_dir() -> Path:
+    """
+    Cross-platform app data directory.
+    Defaults to ~/.fullauto (works on Linux/macOS/Windows).
+    Can be overridden by FULLAUTO_HOME.
+    """
+    override = os.getenv("FULLAUTO_HOME")
+    base = Path(override).expanduser() if override else (Path.home() / ".fullauto")
+    base.mkdir(parents=True, exist_ok=True)
+    return base
+
+
+CONFIG_PATH = _app_data_dir() / "config.json"
 
 
 def _find_repo_root() -> Path:

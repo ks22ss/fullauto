@@ -29,20 +29,42 @@ PROACTIVE_PROMPT = os.getenv(
 )
 _proactive_task: Optional[asyncio.Task] = None  # prevent duplicate loops on reconnect
 
+# Memory-to-prompt budgeting
+# Caps how much stored memory is prepended to the agent prompt to keep latency/cost stable.
+MAX_MEMORY_PROMPT_CHARS = int(os.getenv("MAX_MEMORY_PROMPT_CHARS", "12000"))
+MAX_MEMORY_ITEMS = int(os.getenv("MAX_MEMORY_ITEMS", "12"))
+
 
 def _get_discord_client():
     intents = discord.Intents.default()
     intents.message_content = True
     return discord.Client(intents=intents)
 
+def _build_memory_prefix(prior: list[str]) -> str:
+    """
+    Build a bounded memory prefix string from stored messages.
+    Strategy: take the most recent items up to MAX_MEMORY_ITEMS, then trim to MAX_MEMORY_PROMPT_CHARS.
+    """
+    if not prior:
+        return ""
+    recent = prior[-MAX_MEMORY_ITEMS:]
+    joined = "\n".join(recent).strip()
+    if not joined:
+        return ""
+    if len(joined) <= MAX_MEMORY_PROMPT_CHARS:
+        return joined
+    # Keep the most recent tail within budget.
+    return joined[-MAX_MEMORY_PROMPT_CHARS:]
+
 
 async def agent_run(prompt: str) -> str:
     """Run the agent on the prompt. On success returns the response and adds to memory. On error raises EmptyPromptError or AgentError; caller should send the error message (do not add to memory)."""
     # Run blocking generate_response in a thread so the event loop can process Discord heartbeats
     prior = list_messages()
-    combined_prompt = f"{prompt}"
-    if prior:
-        combined_prompt = "\n".join(prior) + "\n\n" + prompt
+    mem_prefix = _build_memory_prefix(prior)
+    combined_prompt = prompt
+    if mem_prefix:
+        combined_prompt = mem_prefix + "\n\n" + prompt
     res_message = await asyncio.to_thread(ai.generate_response, combined_prompt)
     add_memory(f"User: {prompt}\n\n Agent: {res_message}\n\n")
 
